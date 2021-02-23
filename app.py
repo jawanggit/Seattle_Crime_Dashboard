@@ -2,12 +2,16 @@ from math import radians, cos, sin, asin, sqrt
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+from dash.dependencies import Input, Output, State
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 import helper_functions as hf
 import dash_table
+import geopy
 from datetime import date
+import folium
+
 
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
@@ -33,10 +37,15 @@ app.layout = html.Div([
         html.Div([
             
 
-            dcc.Textarea(
+            dcc.Input(
                 id='address-input',
-                value='Input Street Address in Seattle, WA'
+                debounce = True,
+                size = '100',
+                type = 'search',
+                placeholder ='Input Street Address in Seattle, WA',
+                value = '',
             ),
+            #html.Button('Submit', id = 'submit_button', n_clicks=0),
             dcc.RadioItems(
                 id='radius-filter',
                 options=[{'label': i, 'value': i} for i in ['2 mile radius', '5 mile radius', '10 mile radius']],
@@ -68,8 +77,8 @@ app.layout = html.Div([
         'padding': '10px 5px'
     }),
     html.Div([
-        html.H3(children = 'Crime Map'),
-        html.Iframe(id = 'map', srcDoc = open('test.html','r').read(), width ='90%', height = '800')
+        html.H3(children = 'Seattle Crime Map'),
+        html.Iframe(id = 'crime_map', srcDoc = open('start_address.html','r').read(), width ='90%', height = '800')
     ],style = {'width':'20%', 'display': 'inline-block', 'textAlign':'center'}),
     
     html.Div([
@@ -115,8 +124,21 @@ app.layout = html.Div([
     ],style = {'width':'25%', 'float': 'right', 'display': 'inline-block', 'textAlign':'center'}),
 ])
 
-# @app.callback(
-# )
+@app.callback(
+    Output(component_id='crime_map',component_property='srcDoc'),
+    Input(component_id='address-input',component_property = 'value'),
+    #State('address-input', 'value')
+)
+def address_to_coord(address_string):
+    #print(response.status_code)
+    #print()
+    geolocator = geopy.geocoders.MapQuest(api_key =	'E2jkOX2GsyC18ys4zRwZBAzY2nYd2MMR')
+    location = geolocator.geocode(query = address_string, exactly_one = True)
+    m = folium.Map(location=location[1], zoom_start = 15)
+    m.save("start_address.html")
+    return open('start_address.html','r').read()
+
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
