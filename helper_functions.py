@@ -5,6 +5,7 @@ import dash_html_components as html
 import plotly.express as px
 import pandas as pd
 from datetime import date, timedelta
+from pandas.tseries.offsets import DateOffset
 
 
 import json
@@ -13,8 +14,32 @@ SPD_data = pd.read_csv('sample_2018_2019.csv',delimiter = ',')
 SPD_data.sort_values(by='Report DateTime', ascending = True, inplace = True)
 SPD_data = SPD_data.iloc[:100000,:]
 
-def point_in_radius(lon1, lat1, lon2, lat2, radius):
 
+# def address_to_coord(address_string):
+#     #print(response.status_code)
+#     #print()
+#     geolocator = geopy.geocoders.MapQuest(api_key =	'E2jkOX2GsyC18ys4zRwZBAzY2nYd2MMR')
+#     location = geolocator.geocode(query = address_string, exactly_one = True)
+#     m = folium.Map(location=location[1], zoom_start = 12)
+#     m.save("start_address.html")
+def crimes_in_radius_dates(coord, radius, range):
+    month_dict = {}
+    for k,v in enumerate(test):
+        month_dict[k+1]=v
+    start_date = month_dict[range[0]]
+
+    end_date = month_dict[range[1]]
+    lat = coord[0]
+    lon = coord[1]
+    print(month_dict)
+    #filter by date range
+    df = SPD_data
+    df['Report DateTime']=pd.to_datetime(df['Report DateTime']).dt.date
+    date_mask = (pd.to_datetime(df['Report DateTime']) >= start_date) &                 (pd.to_datetime(df['Report DateTime']) <= end_date)
+    dff = df[date_mask]
+
+    
+def point_in_radius(lon1, lat1, lon2, lat2, radius):
     # """
     # Calculate the great circle distance between two points 
     # on the earth (specified in decimal degrees)
@@ -98,4 +123,20 @@ def crime_trend_data(type, start):
         df_off['offense_type'] = o_type
         dff = dff.append(df_off,ignore_index = True)       
     return dff
+
+def slider_marks(marks,start_date):
+    maxmarks=marks
+    #tday=pd.Timestamp.today() #gets timestamp of today
+    m1date=start_date
+    datelist=pd.date_range(m1date, periods=maxmarks, freq='M') # list of months as dates
+    dlist=pd.DatetimeIndex(datelist).normalize()
+    tags={} #dictionary relating marks on slider to tags. tags are shown as "Apr', "May', etc
+    datevalues={} #dictionary relating mark to date value
+    x=1
+    for i in dlist:
+        tags[x]=(i).strftime('%b %y') #gets the string representation of next month ex:'Apr'
+        datevalues[x]=i
+        x=x+1
+    print(dlist)
+    return tags,dlist
     
