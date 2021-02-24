@@ -7,12 +7,14 @@ import pandas as pd
 from datetime import date, timedelta
 from pandas.tseries.offsets import DateOffset
 from math import radians, cos, sin, asin, sqrt
+import folium
 
 
 import json
 
 SPD_data = pd.read_csv('sample_2018_2019.csv',delimiter = ',')
 SPD_data.sort_values(by='Report DateTime', ascending = True, inplace = True)
+SPD_data['coordinates'] = SPD_data[['Latitude', 'Longitude']].values.tolist()
 SPD_data = SPD_data.iloc[:100000,:]
 
 
@@ -25,17 +27,26 @@ SPD_data = SPD_data.iloc[:100000,:]
 #     m.save("start_address.html")
 def crimes_in_radius_dates(coord, radius, range):
     month_dict = {}
-    for k,v in enumerate(slider_marks(25,date(2017, 1, 1))[0]):
+    for k,v in enumerate(slider_marks(25,date(2017, 1, 1))[1]):
+        #print(k,v)
         month_dict[k+1]=v
-    start_date = month_dict[range[0]]
-    end_date = month_dict[range[1]]
+
+    start_date = pd.to_datetime(month_dict[range[0]])
+    end_date = pd.to_datetime(month_dict[range[1]])
+    print(start_date)
+    print(end_date)
+    print(radius)
     df = SPD_data
     df['Report DateTime']=pd.to_datetime(df['Report DateTime']).dt.date
-    date_mask = (pd.to_datetime(df['Report DateTime']) >= start_date) &                 (pd.to_datetime(df['Report DateTime']) <= end_date)
+    date_mask = (pd.to_datetime(df['Report DateTime']) >= start_date) & (pd.to_datetime(df['Report DateTime']) <= end_date)
+    #print(date_mask)
     dff = df[date_mask]
-    dff['coord'] = list(zip(dff['Latitude'], dff['Longitude']))
+    #print(f'dff mask: {dff}')
+    #dff['coord'] = dff[['Latitude','Longitude']].values.tolist()
+    #dff['coord'] = list(zip(dff['Latitude'], dff['Longitude']))
+
     result = [point_in_radius(value[0],value[1],coord[0],coord[1],radius)
-                for value in dff['coord']]
+                for value in dff['coordinates']]
          
     return dff[result]
 
@@ -53,7 +64,7 @@ def point_in_radius(lat1, lon1, lat2, lon2, radius):
     a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
     c = 2 * asin(sqrt(a)) 
     r = 3956 # Radius of earth in kilometers. Use 3956 for miles
-    if c*r<=radius:
+    if c*r<=int(radius):
         return True
     else:
         return False
@@ -66,7 +77,7 @@ def address_to_coord(address_string):
     response = requests.get(f'https://nominatim.openstreetmap.org/search?q={query}&format=geojson')
     return(response.json())
 
-def crime_marker(coord,category):
+def crime_marker(coord,category,map):
     colors = {'PROPERTY':'Blue','PERSON':'Red','SOCIETY':'Brown'}
     feature_property = folium.FeatureGroup('PROPERTY')
     feature_person = folium.FeatureGroup('PERSON')
@@ -82,7 +93,7 @@ def crime_marker(coord,category):
             fill_color = colors[y]
         ).add_to(group[y])
     for key in group.keys():
-        group[key].add_to(m)
+        group[key].add_to(map)
 
 def crime_table(type, start, end):
     df =SPD_data[SPD_data['Crime Against Category'] == type].sort_values('Report DateTime', ascending = True)
@@ -138,6 +149,5 @@ def slider_marks(marks,start_date):
         tags[x]=(i).strftime('%b %y') #gets the string representation of next month ex:'Apr'
         datevalues[x]=i
         x=x+1
-    print(dlist)
     return tags,dlist
     

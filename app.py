@@ -10,6 +10,7 @@ import helper_functions as hf
 import dash_table
 import geopy
 import folium
+
 from datetime import date, timedelta
 
 
@@ -50,7 +51,7 @@ app.layout = html.Div([
             dcc.RadioItems(
                 id='radius-filter',
                 options=[{'label': i, 'value': i} for i in ['2 mile radius', '5 mile radius', '10 mile radius']],
-                value='Radius',
+                value='1',
                 labelStyle={'display': 'inline-block'}
             )
         ],
@@ -129,15 +130,17 @@ app.layout = html.Div([
     #State('address-input', 'value')
 )
 def address_to_coord(address_string,radius, range):
-    #print(response.status_code)
-    #print()
     geolocator = geopy.geocoders.MapQuest(api_key =	'E2jkOX2GsyC18ys4zRwZBAzY2nYd2MMR')
     location = geolocator.geocode(query = address_string, exactly_one = True)
+    print(f'location: {location[1]}')
+    print(f'range: {range}')
+    
     m = folium.Map(location=location[1], zoom_start = 15)
     folium.Marker(location = location[1], popup=location[1],
                     tooltip = '<i>Your Location</i>', icon=folium.Icon(color="green")).add_to(m)
-    map_data = crimes_in_radius_dates(location[1],radius,range)
-    crime_marker(map_data['coord'],map_data['Crime Against Category'])
+    map_data = hf.crimes_in_radius_dates(location[1],radius,range)
+    print(map_data)
+    hf.crime_marker(map_data['coordinates'],map_data['Crime Against Category'],m)
     m.save("start_address.html")
     return open('start_address.html','r').read()
 
