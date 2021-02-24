@@ -7,6 +7,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 import helper_functions as hf
+from helper_functions import SPD_data
 import dash_table
 import geopy
 import folium
@@ -50,7 +51,9 @@ app.layout = html.Div([
             #html.Button('Submit', id = 'submit_button', n_clicks=0),
             dcc.RadioItems(
                 id='radius-filter',
-                options=[{'label': i, 'value': i} for i in ['2 mile radius', '5 mile radius', '10 mile radius']],
+                options=[{'label': j, 'value': i} 
+                            for i,j in {2:'2 mile radius',
+                             4:'4 mile radius', 6:'6 mile radius'}.items()],
                 value='1',
                 labelStyle={'display': 'inline-block'}
             )
@@ -83,8 +86,8 @@ app.layout = html.Div([
         html.H6(children = 'Types of Person Offenses'),
         dash_table.DataTable(
             id = "Person_Table",
-            columns = [{"name":i, 'id': i } for i in hf.crime_table('PERSON', '2017-01-02','2017-01-05')],
-            data = hf.crime_table('PERSON', '2017-01-01','2017-01-02').to_dict('records'),
+            data = hf.crime_table(SPD_data,'PERSON', '2017-01-01','2017-01-02').to_dict('records'),
+            columns = [{"name":i, 'id': i } for i in hf.crime_table(SPD_data,'PERSON', '2017-01-02','2017-01-05')],            
             style_cell = {'whiteSpace':'normal',
                             'height':'auto',},
             style_table = {'height': '500px','overflowY': 'auto'}
@@ -97,8 +100,8 @@ app.layout = html.Div([
         html.H6(children = 'Types of Property Offenses'),
         dash_table.DataTable(
             id = "Property_Table",
-            columns = [{"name":i, 'id': i } for i in hf.crime_table('PROPERTY', '2017-01-02','2017-01-05')],
-            data = hf.crime_table('PROPERTY', '2017-01-01','2017-01-02').to_dict('records'),
+            columns = [{"name":i, 'id': i } for i in hf.crime_table(SPD_data,'PROPERTY', '2017-01-02','2017-01-05')],
+            data = hf.crime_table(SPD_data,'PROPERTY', '2017-01-01','2017-01-02').to_dict('records'),
             style_cell = {'whiteSpace':'normal',
                             'height':'auto',},
             style_table = {'height': '500px','overflowY': 'auto'}
@@ -111,8 +114,8 @@ app.layout = html.Div([
         html.H6(children = 'Types of Society Offenses'),
         dash_table.DataTable(
             id = "Society_Table",
-            columns = [{"name":i, 'id': i } for i in hf.crime_table('SOCIETY', '2017-01-02','2017-01-05')],
-            data = hf.crime_table('SOCIETY', '2017-01-01','2017-01-02').to_dict('records'),
+            columns = [{"name":i, 'id': i } for i in hf.crime_table(SPD_data,'SOCIETY', '2017-01-02','2017-01-05')],
+            data = hf.crime_table(SPD_data,'SOCIETY', '2017-01-01','2017-01-02').to_dict('records'),
             style_cell = {'whiteSpace':'normal',
                             'height':'auto',},
             style_table = {'height': '500px','overflowY': 'auto'}
@@ -124,6 +127,9 @@ app.layout = html.Div([
 
 @app.callback(
     Output(component_id='crime-map',component_property='srcDoc'),
+    Output(component_id = 'Person_Table',component_property = 'data'),
+    Output(component_id = 'Property_Table',component_property = 'data'),
+    Output(component_id = 'Society_Table',component_property = 'data'),
     Input(component_id='address-input',component_property = 'value'),
     Input(component_id='radius-filter',component_property = 'value'),
     Input(component_id ='my-datetime-slider', component_property = 'value')
@@ -132,17 +138,32 @@ app.layout = html.Div([
 def address_to_coord(address_string,radius, range):
     geolocator = geopy.geocoders.MapQuest(api_key =	'E2jkOX2GsyC18ys4zRwZBAzY2nYd2MMR')
     location = geolocator.geocode(query = address_string, exactly_one = True)
+    #convert range to datetime dates
+    month_dict = {}
+    for k,v in enumerate(hf.slider_marks(25,date(2017, 1, 1))[1]):
+        #print(k,v)
+        month_dict[k+1]=v
+    start_date = pd.to_datetime(month_dict[range[0]])
+    end_date = pd.to_datetime(month_dict[range[1]])
+    
     print(f'location: {location[1]}')
     print(f'range: {range}')
     
     m = folium.Map(location=location[1], zoom_start = 15)
     folium.Marker(location = location[1], popup=location[1],
-                    tooltip = '<i>Your Location</i>', icon=folium.Icon(color="green")).add_to(m)
-    map_data = hf.crimes_in_radius_dates(location[1],radius,range)
-    print(map_data)
+                    tooltip = '<i>Your Location</i>', icon=folium.Icon(color="gray")).add_to(m)
+    map_data = hf.crimes_in_radius_dates(location[1],radius,start_date,end_date)
     hf.crime_marker(map_data['coordinates'],map_data['Crime Against Category'],m)
+    folium.LayerControl(position='topright',collapsed='False').add_to(m)
     m.save("start_address.html")
-    return open('start_address.html','r').read()
+    print(map_data)
+    #created data for tables and line plots
+    person_table = hf.crime_table(map_data,'PERSON', start_date,end_date).to_dict('records') 
+    property_table = hf.crime_table(map_data,'PROPERTY', start_date,end_date).to_dict('records')
+    society_table = hf.crime_table(map_data,'SOCIETY', start_date,end_date).to_dict('records')
+    
+    print(society_table)
+    return open('start_address.html','r').read(), person_table, property_table, society_table
 
 if __name__ == '__main__':
     app.run_server(debug=True)

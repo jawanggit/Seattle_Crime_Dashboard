@@ -25,14 +25,14 @@ SPD_data = SPD_data.iloc[:100000,:]
 #     location = geolocator.geocode(query = address_string, exactly_one = True)
 #     m = folium.Map(location=location[1], zoom_start = 12)
 #     m.save("start_address.html")
-def crimes_in_radius_dates(coord, radius, range):
-    month_dict = {}
-    for k,v in enumerate(slider_marks(25,date(2017, 1, 1))[1]):
-        #print(k,v)
-        month_dict[k+1]=v
+def crimes_in_radius_dates(coord, radius, start_date, end_date):
+    # month_dict = {}
+    # for k,v in enumerate(slider_marks(25,date(2017, 1, 1))[1]):
+    #     #print(k,v)
+    #     month_dict[k+1]=v
 
-    start_date = pd.to_datetime(month_dict[range[0]])
-    end_date = pd.to_datetime(month_dict[range[1]])
+    # start_date = pd.to_datetime(month_dict[range[0]])
+    # end_date = pd.to_datetime(month_dict[range[1]])
     print(start_date)
     print(end_date)
     print(radius)
@@ -78,7 +78,7 @@ def address_to_coord(address_string):
     return(response.json())
 
 def crime_marker(coord,category,map):
-    colors = {'PROPERTY':'Blue','PERSON':'Red','SOCIETY':'Brown'}
+    colors = {'PROPERTY':'Blue','PERSON':'Red','SOCIETY':'#009933'}
     feature_property = folium.FeatureGroup('PROPERTY')
     feature_person = folium.FeatureGroup('PERSON')
     feature_society = folium.FeatureGroup('SOCIETY')
@@ -86,7 +86,7 @@ def crime_marker(coord,category,map):
     for x, y in zip(coord, category):
         folium.CircleMarker(
             location = x,
-            radius = .1,
+            radius = 3,
             popup = y,
             color = colors[y],
             fill = True,
@@ -95,17 +95,17 @@ def crime_marker(coord,category,map):
     for key in group.keys():
         group[key].add_to(map)
 
-def crime_table(type, start, end):
-    df =SPD_data[SPD_data['Crime Against Category'] == type].sort_values('Report DateTime', ascending = True)
-    df['date']=pd.to_datetime(df['Report DateTime']).dt.date
-    date_mask = (pd.to_datetime(df['date']) >= start) & (pd.to_datetime(df['date']) >= end)
+def crime_table(data,type, start, end):
+    df =data[data['Crime Against Category'] == type].sort_values('Report DateTime', ascending = True)
+    #df['date']=pd.to_datetime(df['Report DateTime']).dt.date
+    date_mask = (pd.to_datetime(df['Report DateTime']) >= start) & (pd.to_datetime(df['Report DateTime']) <= end)
     return df[date_mask].groupby('Offense').count()['Report Number'].reset_index()
     
 def crime_trend_plot(type, start):
 
     df =SPD_data[SPD_data['Crime Against Category'] == type].sort_values('Report DateTime', ascending = True)
-    df['date']=pd.to_datetime(df['Report DateTime']).dt.date
-    date_mask = (pd.to_datetime(df['date']) >= start) & (pd.to_datetime(df['date']) >= pd.to_datetime(start)+timedelta(90))
+    #df['date']=pd.to_datetime(df['Report DateTime']).dt.date
+    date_mask = (pd.to_datetime(df['Report DateTime']) >= start) & (pd.to_datetime(df['Report DateTime']) <= pd.to_datetime(start)+timedelta(90))
     return df[date_mask].groupby('Offense').count()['Report Number'].reset_index()
 
 # def plot_crime(x,y,label):
