@@ -6,6 +6,7 @@ import plotly.express as px
 import pandas as pd
 from datetime import date, timedelta
 from pandas.tseries.offsets import DateOffset
+from math import radians, cos, sin, asin, sqrt
 
 
 import json
@@ -24,22 +25,22 @@ SPD_data = SPD_data.iloc[:100000,:]
 #     m.save("start_address.html")
 def crimes_in_radius_dates(coord, radius, range):
     month_dict = {}
-    for k,v in enumerate(test):
+    for k,v in enumerate(slider_marks(25,date(2017, 1, 1))[0]):
         month_dict[k+1]=v
     start_date = month_dict[range[0]]
-
     end_date = month_dict[range[1]]
-    lat = coord[0]
-    lon = coord[1]
-    print(month_dict)
-    #filter by date range
     df = SPD_data
     df['Report DateTime']=pd.to_datetime(df['Report DateTime']).dt.date
     date_mask = (pd.to_datetime(df['Report DateTime']) >= start_date) &                 (pd.to_datetime(df['Report DateTime']) <= end_date)
     dff = df[date_mask]
+    dff['coord'] = list(zip(dff['Latitude'], dff['Longitude']))
+    result = [point_in_radius(value[0],value[1],coord[0],coord[1],radius)
+                for value in dff['coord']]
+         
+    return dff[result]
 
     
-def point_in_radius(lon1, lat1, lon2, lat2, radius):
+def point_in_radius(lat1, lon1, lat2, lon2, radius):
     # """
     # Calculate the great circle distance between two points 
     # on the earth (specified in decimal degrees)
@@ -52,7 +53,7 @@ def point_in_radius(lon1, lat1, lon2, lat2, radius):
     a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
     c = 2 * asin(sqrt(a)) 
     r = 3956 # Radius of earth in kilometers. Use 3956 for miles
-    if a<=radius:
+    if c*r<=radius:
         return True
     else:
         return False

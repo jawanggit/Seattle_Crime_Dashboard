@@ -9,8 +9,9 @@ import pandas as pd
 import helper_functions as hf
 import dash_table
 import geopy
-from datetime import date
 import folium
+from datetime import date, timedelta
+
 
 
 
@@ -43,7 +44,7 @@ app.layout = html.Div([
                 size = '100',
                 type = 'search',
                 placeholder ='Input Street Address in Seattle, WA',
-                value = '',
+                value = 'Seattle,WA',
             ),
             #html.Button('Submit', id = 'submit_button', n_clicks=0),
             dcc.RadioItems(
@@ -56,19 +57,15 @@ app.layout = html.Div([
         style={'width': '49%', 'display': 'inline-block'}),
         
         html.Div([
-            
-            dcc.DatePickerRange(
-            id='my-date-picker-range',
-            min_date_allowed=date(2017, 1, 1),
-            max_date_allowed=date(2019, 12, 31),
-            initial_visible_month=date(2017, 1, 4),
-            end_date=date(2017, 1, 10)
-            ),
-            dcc.RadioItems(
-                id='date-range',
-                options=[{'label': i, 'value': i} for i in ['1 month', '3 month', '1 year']],
-                value='range',
-                labelStyle={'display': 'inline-block'}
+            html.H5(children='Specify Desired Date Range:'),
+            dcc.RangeSlider(
+            id='my-datetime-slider',
+            updatemode = 'mouseup',
+            min =1,
+            max =25,
+            step = None,
+            value = [1,3],
+            marks = hf.slider_marks(25,date(2017, 1, 1))[0],
             )
         ], style={'width': '49%', 'float': 'right', 'display': 'inline-block'})
     ], style={
@@ -78,7 +75,7 @@ app.layout = html.Div([
     }),
     html.Div([
         html.H3(children = 'Seattle Crime Map'),
-        html.Iframe(id = 'crime_map', srcDoc = open('start_address.html','r').read(), width ='90%', height = '800')
+        html.Iframe(id = 'crime-map', srcDoc = open('start_address.html','r').read(), width ='90%', height = '800')
     ],style = {'width':'20%', 'display': 'inline-block', 'textAlign':'center'}),
     
     html.Div([
@@ -125,20 +122,24 @@ app.layout = html.Div([
 ])
 
 @app.callback(
-    Output(component_id='crime_map',component_property='srcDoc'),
+    Output(component_id='crime-map',component_property='srcDoc'),
     Input(component_id='address-input',component_property = 'value'),
+    Input(component_id='radius-filter',component_property = 'value'),
+    Input(component_id ='my-datetime-slider', component_property = 'value')
     #State('address-input', 'value')
 )
-def address_to_coord(address_string):
+def address_to_coord(address_string,radius, range):
     #print(response.status_code)
     #print()
     geolocator = geopy.geocoders.MapQuest(api_key =	'E2jkOX2GsyC18ys4zRwZBAzY2nYd2MMR')
     location = geolocator.geocode(query = address_string, exactly_one = True)
     m = folium.Map(location=location[1], zoom_start = 15)
+    folium.Marker(location = location[1], popup=location[1],
+                    tooltip = '<i>Your Location</i>', icon=folium.Icon(color="green")).add_to(m)
+    map_data = crimes_in_radius_dates(location[1],radius,range)
+    crime_marker(map_data['coord'],map_data['Crime Against Category'])
     m.save("start_address.html")
     return open('start_address.html','r').read()
-
-
 
 if __name__ == '__main__':
     app.run_server(debug=True)
