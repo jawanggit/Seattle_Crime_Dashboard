@@ -22,14 +22,14 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 
-df_Property = hf.crime_trend_data('PROPERTY','2017-01-01')
-fig_property = px.line(df_Property, x ='date', y = 'Report Number', color = 'offense_type')
+# df_Property = hf.crime_trend_data('PROPERTY','2017-01-01')
+# fig_property = px.line(df_Property, x ='date', y = 'Report Number', color = 'offense_type')
 
-df_Person = hf.crime_trend_data('PERSON','2017-01-01')
-fig_person = px.line(df_Person, x ='date', y = 'Report Number', color = 'offense_type')
+# df_Person = hf.crime_trend_data('PERSON','2017-01-01')
+# fig_person = px.line(df_Person, x ='date', y = 'Report Number', color = 'offense_type')
 
-df_Society = hf.crime_trend_data('PERSON','2017-01-01')
-fig_society = px.line(df_Society, x ='date', y = 'Report Number', color = 'offense_type')
+# df_Society = hf.crime_trend_data('PERSON','2017-01-01')
+# fig_society = px.line(df_Society, x ='date', y = 'Report Number', color = 'offense_type')
 
 
 app.layout = html.Div([
@@ -93,7 +93,8 @@ app.layout = html.Div([
             style_table = {'height': '500px','overflowY': 'auto'}
         ),
         html.H6(children = 'Person Offenses: Past 6 Month Trend'),
-        dcc.Graph(figure = fig_person),
+        dcc.Graph(id = 'Person_Graph',
+        ),
     ],style = {'width':'25%', 'float': 'right', 'display': 'inline-block', 'textAlign':'center'}),
 
     html.Div([
@@ -107,7 +108,8 @@ app.layout = html.Div([
             style_table = {'height': '500px','overflowY': 'auto'}
         ),
         html.H6(children = 'Property Offenses: Past 6 Month Trend'),
-        dcc.Graph(figure = fig_property)        
+        dcc.Graph(id = 'Property_Graph',
+        )        
     ],style = {'width':'30%','float': 'right', 'display': 'inline-block', 'textAlign':'center'}),
 
     html.Div([
@@ -121,7 +123,8 @@ app.layout = html.Div([
             style_table = {'height': '500px','overflowY': 'auto'}
         ),
         html.H6(children = 'Society Offenses: Past 6 Month Trend'),
-        dcc.Graph(figure = fig_society)     
+        dcc.Graph(id = 'Society_Graph',
+        )     
     ],style = {'width':'25%', 'float': 'right', 'display': 'inline-block', 'textAlign':'center'}),
 ])
 
@@ -130,6 +133,9 @@ app.layout = html.Div([
     Output(component_id = 'Person_Table',component_property = 'data'),
     Output(component_id = 'Property_Table',component_property = 'data'),
     Output(component_id = 'Society_Table',component_property = 'data'),
+    Output(component_id = 'Person_Graph',component_property = 'figure'),
+    Output(component_id = 'Property_Graph',component_property = 'figure'),
+    Output(component_id = 'Society_Graph',component_property = 'figure'),
     Input(component_id='address-input',component_property = 'value'),
     Input(component_id='radius-filter',component_property = 'value'),
     Input(component_id ='my-datetime-slider', component_property = 'value')
@@ -146,8 +152,8 @@ def address_to_coord(address_string,radius, range):
     start_date = pd.to_datetime(month_dict[range[0]])
     end_date = pd.to_datetime(month_dict[range[1]])
     
-    print(f'location: {location[1]}')
-    print(f'range: {range}')
+    #print(f'location: {location[1]}')
+    #print(f'range: {range}')
     
     m = folium.Map(location=location[1], zoom_start = 15)
     folium.Marker(location = location[1], popup=location[1],
@@ -156,14 +162,19 @@ def address_to_coord(address_string,radius, range):
     hf.crime_marker(map_data['coordinates'],map_data['Crime Against Category'],m)
     folium.LayerControl(position='topright',collapsed='False').add_to(m)
     m.save("start_address.html")
-    print(map_data)
+    #print(map_data)
+    
     #created data for tables and line plots
     person_table = hf.crime_table(map_data,'PERSON', start_date,end_date).to_dict('records') 
     property_table = hf.crime_table(map_data,'PROPERTY', start_date,end_date).to_dict('records')
     society_table = hf.crime_table(map_data,'SOCIETY', start_date,end_date).to_dict('records')
+    person_graph = hf.crime_trend_data(map_data,'PERSON',end_date)
+    property_graph = hf.crime_trend_data(map_data,'PROPERTY',end_date)
+    society_graph = hf.crime_trend_data(map_data,'SOCIETY',end_date)
     
-    print(society_table)
-    return open('start_address.html','r').read(), person_table, property_table, society_table
+    #print(society_graph)
+    return open('start_address.html','r').read(), person_table, property_table, society_table,person_graph,property_graph,society_graph
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)

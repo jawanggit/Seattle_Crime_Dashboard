@@ -101,12 +101,12 @@ def crime_table(data,type, start, end):
     date_mask = (pd.to_datetime(df['Report DateTime']) >= start) & (pd.to_datetime(df['Report DateTime']) <= end)
     return df[date_mask].groupby('Offense').count()['Report Number'].reset_index()
     
-def crime_trend_plot(type, start):
+# def crime_trend_plot(data,type, start):
 
-    df =SPD_data[SPD_data['Crime Against Category'] == type].sort_values('Report DateTime', ascending = True)
-    #df['date']=pd.to_datetime(df['Report DateTime']).dt.date
-    date_mask = (pd.to_datetime(df['Report DateTime']) >= start) & (pd.to_datetime(df['Report DateTime']) <= pd.to_datetime(start)+timedelta(90))
-    return df[date_mask].groupby('Offense').count()['Report Number'].reset_index()
+#     df =data[data['Crime Against Category'] == type].sort_values('Report DateTime', ascending = True)
+#     #df['date']=pd.to_datetime(df['Report DateTime']).dt.date
+#     date_mask = (pd.to_datetime(df['Report DateTime']) >= start) & (pd.to_datetime(df['Report DateTime']) <= pd.to_datetime(start)+timedelta(90))
+#     return df[date_mask].groupby('Offense').count()['Report Number'].reset_index()
 
 # def plot_crime(x,y,label):
 
@@ -120,21 +120,24 @@ def crime_trend_plot(type, start):
 
 #     ax.legend()
 
-def crime_trend_data(type, start):
+def crime_trend_data(data,type, end_date):
 
-    df =SPD_data[SPD_data['Crime Against Category'] == type].sort_values('Report DateTime', ascending = True)
-    df['date']=pd.to_datetime(df['Report DateTime']).dt.date
-    date_mask = (pd.to_datetime(df['date']) >= start) & (pd.to_datetime(df['date']) <= pd.to_datetime(start)+timedelta(days=180)) #selects only rows with certain timeframe
+    df =data[data['Crime Against Category'] == type].sort_values('Report DateTime', ascending = True)
+    #df['date']=pd.to_datetime(df['Report DateTime']).dt.date
+    date_mask = (pd.to_datetime(df['Report DateTime']) <= end_date) & (pd.to_datetime(df['Report DateTime']) >= pd.to_datetime(end_date)-timedelta(days=180)) #selects only rows with certain timeframe
     df = df[date_mask]
     offense_names = df['Offense'].unique()
     dff = pd.DataFrame()
     for o_type in offense_names:
         df_off = df[df['Offense'] == o_type]
-        df_off['date'] = pd.to_datetime(df_off['date'],infer_datetime_format=True)
-        df_off = df_off.resample('M', on='date').count()['Report Number'].reset_index()
+        df_off['Report DateTime'] = pd.to_datetime(df_off['Report DateTime'])
+        df_off = df_off.resample('M', on='Report DateTime').count()['Report Number'].reset_index()
         df_off['offense_type'] = o_type
-        dff = dff.append(df_off,ignore_index = True)       
-    return dff
+        dff=dff.append(df_off,ignore_index = True)
+    print(f'dff: {dff}')
+    fig_property = px.line(dff, x ='Report DateTime', y = 'Report Number', color = 'offense_type')
+
+    return fig_property
 
 def slider_marks(marks,start_date):
     maxmarks=marks
