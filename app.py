@@ -11,6 +11,7 @@ from helper_functions import SPD_data
 import dash_table
 import geopy
 import folium
+import scipy.stats as scipy
 #import dash_bootstrap_components as dbc
 
 from datetime import date, timedelta
@@ -35,7 +36,7 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 
 app.layout = html.Div([ 
-     dcc.Tabs(id='tabs-example', value='tab-1', children=[
+     dcc.Tabs(id='tabs-example', value='tab-testing', children=[
         dcc.Tab(label='Crime Dashboard', value='tab-crime'),
         dcc.Tab(label='Hypothesis Testing on Crime Data', value='tab-testing'),
     ]),
@@ -43,9 +44,13 @@ app.layout = html.Div([
 ])    
 
 
-    html.Div([    
+@app.callback(Output('tab-content', 'children'),
+              Input('tabs-example', 'value'))
+def render_content(tab):
+    if tab == 'tab-crime':
+        return html.Div([    
         html.Div([ 
-            html.H3(children='Seattle Interactive Crime Dashboard'),
+            html.H3(children='Seattle Interactive Crime Dashboard', style = {'textAlign':'center'}),
 
             html.Div([
                 
@@ -143,25 +148,88 @@ app.layout = html.Div([
         'display': 'inline-block', 'textAlign':'center', 'padding': '10px 5px'}),
     ], style={
             'backgroundColor': '#ddd',
-        }),
-    
-])
-
-@app.callback(Output('Crime-Dashboard', 'children'),
-              Input('tabs-example', 'value'))
-def render_content(tab):
-    if tab == 'tab-crime':
-        return html.Div([
-            html.H3('Tab content 1')
-        ])
+        })
     elif tab == 'tab-testing':
         return html.Div([
-            html.H3('Tab content 2')
+            html.H3('''This page lets you test if a certain area/neighborhood in Seattle
+            have a greater incident rate per month for various types of offenses compared to other 
+            areas/neighborhoods.\n For example, does Pioneer Square have a lower incident rate 
+            for "Simple Assault" than Wallingford?'''),
+        
+            html.H3('Select an offense type:'),
+            
+            dcc.Dropdown(
+                id = 'offense-dropdown',
+                options=hf.site_names('Offense'),
+                value = 'Simple Assault'
+            ),
+
+
+            html.H3('Select an area/neighborhood in Seattle:'),
+
+            dcc.Dropdown(
+                id = 'first-dropdown',
+                options=hf.site_names('MCPP'),
+                value = 'PIONEER SQUARE'
+            ),
+
+            html.H3('Select another area/neighborhood in Seattle to compare with:'),
+
+            dcc.Dropdown(
+                id = 'second-dropdown',
+                options=hf.site_names('MCPP'),
+                value = 'WALLINGFORD'
+            ),
+
+            html.H3('Conclusion:'),
+            
+            dcc.Textarea(
+                id = 'result',
+                placeholder = 'ipsum lorem',
+                value = 'This is where the conclusion goes',
+                style = {'width':'80%'}
+            ),
+
+
+
         ])
+@app.callback(
+    Output(component_id='result',component_property='value'),
+    Input(component_id='offense-dropdown',component_property = 'value'),
+    Input(component_id='first-dropdown',component_property = 'value'),
+    Input(component_id='second-dropdown',component_property = 'value'),
+)
+def testing(offense_type, n1,n2):
+    print(offense_type,n1,n2)
+    #timedelta = pd.to_datetime(hf.SPD_data['Report DateTime'].to_numpy()[-1]) - pd.to_datetime(hf.SPD_data['Report DateTime'].to_numpy()[0])
+    #days_in_sample = timedelta.days/30
+    mask = (hf.SPD_data['Offense'] == offense_type) & ((hf.SPD_data['MCPP'].str.contains(n1)) | (hf.SPD_data['MCPP'].str.contains(n2)))
+    df = hf.SPD_data[mask]
+    if df.empty:
+        return "Unable to compare these groups since one of the groups has no offenses of that type"
+    
+    df['test']=df.apply(lambda x: 1 if n2 in x['MCPP'] else 0,axis=1)
+    df['Report DateTime'] = pd.to_datetime(df['Report DateTime'])
+    dff = df[['Report DateTime','test']].sort_values('Report DateTime', ascending = True)
+    dff_n1 = dff[dff['test'] == 0]
+    dff_n2 = dff[dff['test'] == 1]
+    #got the count of each group by month and then dropped the date column
+    dff_n1 = dff_n1.resample('M', on='Report DateTime').count()['test'].reset_index()
+    dff_n1 = dff_n1['test']
+   
+    dff_n2 = dff_n2.resample('M', on='Report DateTime').count()['test'].reset_index()
+    dff_n2 = dff_n2['test']
+    #t-statistic
+    result=scipy.ttest_ind(dff_n1,dff_n2,axis=0,equal_var=False,alternative = 'less')
+    if result[1]<.05:
+        return (f'Under a Two Sample T-Test, the t-statistic was {result[0]} with a p-value of {result[1]}.\n'
+         f'Thus, we can reject our null hypothesis that there is NO difference in incidences per monnth for {offense_type} between {n1} and {n2}.\n'
+         f'We can also accept the alternative hypothesis')
 
-
-
-
+    else:
+        return (f'Under a Two Sample T-Test, the t-statistic was {result[0]} with a p-value of {result[1]}.\n'
+         f'Thus, we fail to reject our null hypothesis that there is NO difference in incidences per monnth for {offense_type} between {n1} and {n2}.\n')
+    
 
 
 

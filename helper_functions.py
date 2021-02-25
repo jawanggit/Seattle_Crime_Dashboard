@@ -4,6 +4,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 import plotly.express as px
 import pandas as pd
+import numpy as np
 from datetime import date, timedelta
 from pandas.tseries.offsets import DateOffset
 from math import radians, cos, sin, asin, sqrt
@@ -153,4 +154,13 @@ def slider_marks(marks,start_date):
         datevalues[x]=i
         x=x+1
     return tags,dlist
-    
+
+def site_names(col_name):
+    lst_sites = SPD_data[col_name].unique()
+    lst_sites = np.sort(lst_sites)
+    result = []
+    for site in lst_sites:
+        result.append({'label': site,'value':site})
+    return result
+
+
