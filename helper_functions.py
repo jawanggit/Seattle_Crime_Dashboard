@@ -9,6 +9,7 @@ from datetime import date, timedelta
 from pandas.tseries.offsets import DateOffset
 from math import radians, cos, sin, asin, sqrt
 import folium
+import plotly.graph_objects as go
 
 
 import json
@@ -126,19 +127,28 @@ def crime_trend_data(data,type, end_date):
     df = df[date_mask]
     offense_names = df['Offense'].unique()
     dff = pd.DataFrame()
+    
+    fig = go.Figure()
     for o_type in offense_names:
         df_off = df[df['Offense'] == o_type]
         df_off['Report DateTime'] = pd.to_datetime(df_off['Report DateTime'])
         df_off = df_off.resample('M', on='Report DateTime').count()['Report Number'].reset_index()
-        df_off['offense_type'] = o_type
-        dff=dff.append(df_off,ignore_index = True)
-    #print(f'dff: {dff}')
-    fig_property = px.line(dff, x ='Report DateTime', y = 'Report Number', color = 'offense_type')
-    fig_property.update_layout(
-    showlegend=False
-    )
+        #df_off['offense_type'] = o_type
     
-    return fig_property
+    #fig_property = px.line(dff, x ='Report DateTime', y = 'Report Number', color = 'offense_type')
+    #fig_property2 = px.scatter(dff, x ='Report DateTime', y = 'Report Number', color= 'offense_type')
+
+        fig.add_trace(go.Scatter(x =df_off['Report DateTime'], y = df_off['Report Number'],
+         mode='lines+markers', name = o_type))
+
+
+    fig.update_layout(legend = dict(
+    yanchor = "top",
+    y = -0.5,
+    xanchor= "left", 
+    x = 0.0
+    ))
+    return fig
 
 def slider_marks(marks,start_date):
     maxmarks=marks

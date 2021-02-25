@@ -23,20 +23,10 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
-
-# df_Property = hf.crime_trend_data('PROPERTY','2017-01-01')
-# fig_property = px.line(df_Property, x ='date', y = 'Report Number', color = 'offense_type')
-
-# df_Person = hf.crime_trend_data('PERSON','2017-01-01')
-# fig_person = px.line(df_Person, x ='date', y = 'Report Number', color = 'offense_type')
-
-# df_Society = hf.crime_trend_data('PERSON','2017-01-01')
-# fig_society = px.line(df_Society, x ='date', y = 'Report Number', color = 'offense_type')
-
-
+server = app.server
 
 app.layout = html.Div([ 
-     dcc.Tabs(id='tabs-example', value='tab-testing', children=[
+     dcc.Tabs(id='tabs-example', value='tab-crime', children=[
         dcc.Tab(label='Crime Dashboard', value='tab-crime'),
         dcc.Tab(label='Hypothesis Testing on Crime Data', value='tab-testing'),
     ]),
@@ -50,7 +40,7 @@ def render_content(tab):
     if tab == 'tab-crime':
         return html.Div([    
         html.Div([ 
-            html.H3(children='Seattle Interactive Crime Dashboard', style = {'textAlign':'center'}),
+            html.H3(children='Seattle Interactive Crime Dashboard', style = {'font-size':'40px','textAlign':'center'}),
 
             html.Div([
                 
@@ -173,7 +163,7 @@ def render_content(tab):
                 value = 'PIONEER SQUARE'
             ),
 
-            html.H3('Select another area/neighborhood in Seattle to compare with:'),
+            html.H3('Select another area/neighborhood in Seattle to compare against:'),
 
             dcc.Dropdown(
                 id = 'second-dropdown',
@@ -201,12 +191,11 @@ def render_content(tab):
 )
 def testing(offense_type, n1,n2):
     print(offense_type,n1,n2)
-    #timedelta = pd.to_datetime(hf.SPD_data['Report DateTime'].to_numpy()[-1]) - pd.to_datetime(hf.SPD_data['Report DateTime'].to_numpy()[0])
-    #days_in_sample = timedelta.days/30
+    
     mask = (hf.SPD_data['Offense'] == offense_type) & ((hf.SPD_data['MCPP'].str.contains(n1)) | (hf.SPD_data['MCPP'].str.contains(n2)))
     df = hf.SPD_data[mask]
     if df.empty:
-        return "Unable to compare these groups since one of the groups has no offenses of that type"
+        return "Unable to compare these areas since one or both of the areas has no offenses of that type"
     
     df['test']=df.apply(lambda x: 1 if n2 in x['MCPP'] else 0,axis=1)
     df['Report DateTime'] = pd.to_datetime(df['Report DateTime'])
@@ -252,23 +241,20 @@ def address_to_coord(address_string,radius, range):
     #convert range to datetime dates
     month_dict = {}
     for k,v in enumerate(hf.slider_marks(25,date(2017, 1, 1))[1]):
-        #print(k,v)
         month_dict[k+1]=v
     start_date = pd.to_datetime(month_dict[range[0]])
     end_date = pd.to_datetime(month_dict[range[1]])
     
-    #print(f'location: {location[1]}')
     print(f'start date: {start_date}')
     print(f'end date: {end_date}')
     
-    m = folium.Map(location=location[1], zoom_start = 15)
+    m = folium.Map(location=location[1], zoom_start = 14)
     folium.Marker(location = location[1], popup=location[1],
                     tooltip = '<i>Your Location</i>', icon=folium.Icon(color="orange")).add_to(m)
     map_data = hf.crimes_in_radius_dates(location[1],radius,start_date,end_date)
     hf.crime_marker(map_data['coordinates'],map_data['Crime Against Category'],m)
     folium.LayerControl(position='topright',collapsed='False').add_to(m)
     m.save("start_address.html")
-    #print(map_data)
     
     #created data for tables and line plots
     person_table = hf.crime_table(map_data,'PERSON', start_date,end_date).to_dict('records') 
@@ -278,7 +264,6 @@ def address_to_coord(address_string,radius, range):
     property_graph = hf.crime_trend_data(map_data,'PROPERTY',end_date)
     society_graph = hf.crime_trend_data(map_data,'SOCIETY',end_date)
     
-    #print(society_graph)
     return open('start_address.html','r').read(), person_table, property_table, society_table,person_graph,property_graph,society_graph
 
 
