@@ -1,4 +1,4 @@
-Brotli @ file:///tmp/build/80754af9/brotli-split_1602517619121/work
+Brotli==1.0.9
 certifi==2020.12.5
 click @ file:///home/linux1/recipes/ci/click_1610990599742/work
 dash @ file:///tmp/build/80754af9/dash_1611168717544/work
