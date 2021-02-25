@@ -11,6 +11,7 @@ from helper_functions import SPD_data
 import dash_table
 import geopy
 import folium
+#import dash_bootstrap_components as dbc
 
 from datetime import date, timedelta
 
@@ -32,101 +33,137 @@ app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 # fig_society = px.line(df_Society, x ='date', y = 'Report Number', color = 'offense_type')
 
 
-app.layout = html.Div([
-    
-    html.Div([
-        html.H3(children='Seattle Interactive Crime Dashboard'),
 
+app.layout = html.Div([ 
+     dcc.Tabs(id='tabs-example', value='tab-1', children=[
+        dcc.Tab(label='Crime Dashboard', value='tab-crime'),
+        dcc.Tab(label='Hypothesis Testing on Crime Data', value='tab-testing'),
+    ]),
+    html.Div(id = 'tab-content')
+])    
+
+
+    html.Div([    
+        html.Div([ 
+            html.H3(children='Seattle Interactive Crime Dashboard'),
+
+            html.Div([
+                
+                html.H5(children='Enter a Seattle Address to see Crime Incidences:'),
+
+                dcc.Input(
+                    id='address-input',
+                    debounce = True,
+                    size = '100',
+                    type = 'search',
+                    placeholder ='Input Street Address in Seattle, WA',
+                    value = 'Pioneer Square, Seattle, WA',
+                ),
+        
+                dcc.RadioItems(
+                    id='radius-filter',
+                    options=[{'label': j, 'value': i} 
+                                for i,j in {2:'2 mile radius',
+                                4:'4 mile radius', 6:'6 mile radius'}.items()],
+                    value='1',
+                    labelStyle={'display': 'inline-block'}
+                ),
+
+                html.H5(children='Date Range for Crimes Reported:'),
+                
+                dcc.RangeSlider(
+                    id='my-datetime-slider',
+                    updatemode = 'mouseup',
+                    min =1,
+                    max =25,
+                    step = None,
+                    value = [1,3],
+                    marks = hf.slider_marks(25,date(2017, 1, 1))[0],
+                )
+            ], style={'width': '100%', 'display': 'inline-block',
+             'textAlign': 'center'}),
+        ], style={
+            'borderBottom': 'thin lightgrey solid',
+            'backgroundColor': 'rgb(250, 250, 250)',
+            'padding': '10px 30px',
+            'height':'290px',
+        }),
         html.Div([
-            
-
-            dcc.Input(
-                id='address-input',
-                debounce = True,
-                size = '100',
-                type = 'search',
-                placeholder ='Input Street Address in Seattle, WA',
-                value = 'Seattle,WA',
-            ),
-            #html.Button('Submit', id = 'submit_button', n_clicks=0),
-            dcc.RadioItems(
-                id='radius-filter',
-                options=[{'label': j, 'value': i} 
-                            for i,j in {2:'2 mile radius',
-                             4:'4 mile radius', 6:'6 mile radius'}.items()],
-                value='1',
-                labelStyle={'display': 'inline-block'}
-            )
-        ],
-        style={'width': '49%', 'display': 'inline-block'}),
+            html.H3(children = 'Seattle Crime Map'),
+            html.Iframe(id = 'crime-map', srcDoc = open('start_address.html','r').read(), width ='100%', height = '500')
+        ],style = {'width':'30%', 'display': 'inline-block',
+        'textAlign':'center','padding':'10px 5px'}),
         
         html.Div([
-            html.H5(children='Specify Desired Date Range:'),
-            dcc.RangeSlider(
-            id='my-datetime-slider',
-            updatemode = 'mouseup',
-            min =1,
-            max =25,
-            step = None,
-            value = [1,3],
-            marks = hf.slider_marks(25,date(2017, 1, 1))[0],
+            html.H6(children = 'Types of Person Offenses'),
+            dash_table.DataTable(
+                id = "Person_Table",
+                data = hf.crime_table(SPD_data,'PERSON', '2017-01-01','2017-01-02').to_dict('records'),
+                columns = [{"name":i, 'id': i } for i in hf.crime_table(SPD_data,'PERSON', '2017-01-02','2017-01-05')],            
+                style_cell = {'whiteSpace':'normal',
+                                'height':'auto',},
+                style_table = {'height': '300px','overflowY': 'auto'}
+            ),
+            html.H6(children = 'Person Offenses: Past 6 Month Trend'),
+            dcc.Graph(id = 'Person_Graph',
             )
-        ], style={'width': '49%', 'float': 'right', 'display': 'inline-block'})
+        ],style = {'width':'23%', 'float': 'right', 'display': 'inline-block',
+        'textAlign':'center', 'padding': '10px 5px'}),
+
+        html.Div([
+            html.H6(children = 'Types of Property Offenses'),
+            dash_table.DataTable(
+                id = "Property_Table",
+                columns = [{"name":i, 'id': i } for i in hf.crime_table(SPD_data,'PROPERTY', '2017-01-02','2017-01-05')],
+                data = hf.crime_table(SPD_data,'PROPERTY', '2017-01-01','2017-01-02').to_dict('records'),
+                style_cell = {'whiteSpace':'normal',
+                                'height':'auto',},
+                style_table = {'height': '300px','overflowY': 'auto'}
+            ),
+            html.H6(children = 'Property Offenses: Past 6 Month Trend'),
+            dcc.Graph(id = 'Property_Graph',
+            )        
+        ],style = {'width':'23%','float': 'right',
+        'display': 'inline-block', 'textAlign':'center','padding': '10px 5px'}),
+
+        html.Div([
+            html.H6(children = 'Types of Society Offenses'),
+            dash_table.DataTable(
+                id = "Society_Table",
+                columns = [{"name":i, 'id': i } for i in hf.crime_table(SPD_data,'SOCIETY', '2017-01-02','2017-01-05')],
+                data = hf.crime_table(SPD_data,'SOCIETY', '2017-01-01','2017-01-02').to_dict('records'),
+                style_cell = {'whiteSpace':'normal',
+                                'height':'auto',},
+                style_table = {'height': '300px','overflowY': 'auto'}
+            ),
+            html.H6(children = 'Society Offenses: Past 6 Month Trend'),
+            dcc.Graph(id = 'Society_Graph',
+            )     
+        ],style = {'width':'22%', 'float': 'right', 
+        'display': 'inline-block', 'textAlign':'center', 'padding': '10px 5px'}),
     ], style={
-        'borderBottom': 'thin lightgrey solid',
-        'backgroundColor': 'rgb(250, 250, 250)',
-        'padding': '10px 5px'
-    }),
-    html.Div([
-        html.H3(children = 'Seattle Crime Map'),
-        html.Iframe(id = 'crime-map', srcDoc = open('start_address.html','r').read(), width ='90%', height = '800')
-    ],style = {'width':'20%', 'display': 'inline-block', 'textAlign':'center'}),
+            'backgroundColor': '#ddd',
+        }),
     
-    html.Div([
-        html.H6(children = 'Types of Person Offenses'),
-        dash_table.DataTable(
-            id = "Person_Table",
-            data = hf.crime_table(SPD_data,'PERSON', '2017-01-01','2017-01-02').to_dict('records'),
-            columns = [{"name":i, 'id': i } for i in hf.crime_table(SPD_data,'PERSON', '2017-01-02','2017-01-05')],            
-            style_cell = {'whiteSpace':'normal',
-                            'height':'auto',},
-            style_table = {'height': '500px','overflowY': 'auto'}
-        ),
-        html.H6(children = 'Person Offenses: Past 6 Month Trend'),
-        dcc.Graph(id = 'Person_Graph',
-        ),
-    ],style = {'width':'25%', 'float': 'right', 'display': 'inline-block', 'textAlign':'center'}),
-
-    html.Div([
-        html.H6(children = 'Types of Property Offenses'),
-        dash_table.DataTable(
-            id = "Property_Table",
-            columns = [{"name":i, 'id': i } for i in hf.crime_table(SPD_data,'PROPERTY', '2017-01-02','2017-01-05')],
-            data = hf.crime_table(SPD_data,'PROPERTY', '2017-01-01','2017-01-02').to_dict('records'),
-            style_cell = {'whiteSpace':'normal',
-                            'height':'auto',},
-            style_table = {'height': '500px','overflowY': 'auto'}
-        ),
-        html.H6(children = 'Property Offenses: Past 6 Month Trend'),
-        dcc.Graph(id = 'Property_Graph',
-        )        
-    ],style = {'width':'30%','float': 'right', 'display': 'inline-block', 'textAlign':'center'}),
-
-    html.Div([
-        html.H6(children = 'Types of Society Offenses'),
-        dash_table.DataTable(
-            id = "Society_Table",
-            columns = [{"name":i, 'id': i } for i in hf.crime_table(SPD_data,'SOCIETY', '2017-01-02','2017-01-05')],
-            data = hf.crime_table(SPD_data,'SOCIETY', '2017-01-01','2017-01-02').to_dict('records'),
-            style_cell = {'whiteSpace':'normal',
-                            'height':'auto',},
-            style_table = {'height': '500px','overflowY': 'auto'}
-        ),
-        html.H6(children = 'Society Offenses: Past 6 Month Trend'),
-        dcc.Graph(id = 'Society_Graph',
-        )     
-    ],style = {'width':'25%', 'float': 'right', 'display': 'inline-block', 'textAlign':'center'}),
 ])
+
+@app.callback(Output('Crime-Dashboard', 'children'),
+              Input('tabs-example', 'value'))
+def render_content(tab):
+    if tab == 'tab-crime':
+        return html.Div([
+            html.H3('Tab content 1')
+        ])
+    elif tab == 'tab-testing':
+        return html.Div([
+            html.H3('Tab content 2')
+        ])
+
+
+
+
+
+
 
 @app.callback(
     Output(component_id='crime-map',component_property='srcDoc'),
@@ -153,11 +190,12 @@ def address_to_coord(address_string,radius, range):
     end_date = pd.to_datetime(month_dict[range[1]])
     
     #print(f'location: {location[1]}')
-    #print(f'range: {range}')
+    print(f'start date: {start_date}')
+    print(f'end date: {end_date}')
     
     m = folium.Map(location=location[1], zoom_start = 15)
     folium.Marker(location = location[1], popup=location[1],
-                    tooltip = '<i>Your Location</i>', icon=folium.Icon(color="gray")).add_to(m)
+                    tooltip = '<i>Your Location</i>', icon=folium.Icon(color="orange")).add_to(m)
     map_data = hf.crimes_in_radius_dates(location[1],radius,start_date,end_date)
     hf.crime_marker(map_data['coordinates'],map_data['Crime Against Category'],m)
     folium.LayerControl(position='topright',collapsed='False').add_to(m)

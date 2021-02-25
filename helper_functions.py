@@ -33,9 +33,6 @@ def crimes_in_radius_dates(coord, radius, start_date, end_date):
 
     # start_date = pd.to_datetime(month_dict[range[0]])
     # end_date = pd.to_datetime(month_dict[range[1]])
-    print(start_date)
-    print(end_date)
-    print(radius)
     df = SPD_data
     df['Report DateTime']=pd.to_datetime(df['Report DateTime']).dt.date
     date_mask = (pd.to_datetime(df['Report DateTime']) >= start_date) & (pd.to_datetime(df['Report DateTime']) <= end_date)
@@ -99,7 +96,7 @@ def crime_table(data,type, start, end):
     df =data[data['Crime Against Category'] == type].sort_values('Report DateTime', ascending = True)
     #df['date']=pd.to_datetime(df['Report DateTime']).dt.date
     date_mask = (pd.to_datetime(df['Report DateTime']) >= start) & (pd.to_datetime(df['Report DateTime']) <= end)
-    return df[date_mask].groupby('Offense').count()['Report Number'].reset_index()
+    return df[date_mask].groupby('Offense').count()['Report Number'].sort_values(ascending = False).reset_index()
     
 # def crime_trend_plot(data,type, start):
 
@@ -134,9 +131,12 @@ def crime_trend_data(data,type, end_date):
         df_off = df_off.resample('M', on='Report DateTime').count()['Report Number'].reset_index()
         df_off['offense_type'] = o_type
         dff=dff.append(df_off,ignore_index = True)
-    print(f'dff: {dff}')
+    #print(f'dff: {dff}')
     fig_property = px.line(dff, x ='Report DateTime', y = 'Report Number', color = 'offense_type')
-
+    fig_property.update_layout(
+    showlegend=False
+    )
+    
     return fig_property
 
 def slider_marks(marks,start_date):
