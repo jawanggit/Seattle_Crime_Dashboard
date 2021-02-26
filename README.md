@@ -41,7 +41,7 @@ Other functions that were used are described below:
 
 1. this function that plotted markers on the graph for the 3 types of Crimes (Property,Person, Society)
 
-'''python
+```python
 def crime_marker(coord,category,map):
     colors = {'PROPERTY':'Blue','PERSON':'Red','SOCIETY':'#009933'}
     feature_property = folium.FeatureGroup('PROPERTY')
@@ -59,11 +59,11 @@ def crime_marker(coord,category,map):
         ).add_to(group[y])
     for key in group.keys():
         group[key].add_to(map)
-'''
+```
 
 2. this function plotted line graphs showing the 6 month trend for various types of offenses that make up a certain type of Crime Group
 
-'''python
+```python
 def crime_trend_data(data,type, end_date):
 
     df =data[data['Crime Against Category'] == type].sort_values('Report DateTime', ascending = True)
@@ -78,7 +78,7 @@ def crime_trend_data(data,type, end_date):
         df_off['Report DateTime'] = pd.to_datetime(df_off['Report DateTime'])
         df_off = df_off.resample('M', on='Report DateTime').count()['Report Number'].reset_index()
         fig.add_trace(go.Scatter(x =df_off['Report DateTime'], y = df_off['Report Number'], mode='lines+markers', name = o_type))
-'''
+```
 
 ## Dashboard 
 ### Functionality
