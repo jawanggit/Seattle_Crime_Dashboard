@@ -186,6 +186,10 @@ def render_content(tab):
                 style = {'width':'48%', 'height':'300px','font-size':'10px','display':'inline-block','textAlign':'center','padding': '10px 5px'}
             )
         ], style = {'height':'1000px', 'padding': '10px 5px'})
+
+
+
+
 @app.callback(
     Output(component_id='result',component_property='value'),
     Output(component_id='histogram-graph',component_property='figure'),
@@ -198,9 +202,9 @@ def testing(offense_type, n1,n2):
     fig = go.Figure()
     if n1 ==n2:
         return ('Both groups are the same, no hypthesis test is needed',fig, fig)
-    mask = (SPD_data['Offense'] == offense_type) & ((SPD_data['MCPP'].str.contains(n1)) | (SPD_data['MCPP'].str.contains(n2)))
+    mask = (hf.SPD_data['Offense'] == offense_type) & ((hf.SPD_data['MCPP'].str.contains(n1)) | (hf.SPD_data['MCPP'].str.contains(n2)))
     #print(mask)
-    df = SPD_data[mask]
+    df = hf.SPD_data[mask]
     #print(df)
     if df.empty:
         return ("Unable to compare these groups since one of the groups has no offenses of that type",fig,fig)
@@ -248,7 +252,7 @@ def testing(offense_type, n1,n2):
                    xaxis_title='Avg Monthly Incident Rate',
                    yaxis_title='Probability Density')
    
-    result = stats.ttest_ind(dff_n1,dff_n2,axis=0,equal_var=False,alternative = 'greater') 
+    result = stats.ttest_ind(dff_n1,dff_n2, axis=0,equal_var=False) 
     
 
     if result[1]<.05:
