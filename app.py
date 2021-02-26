@@ -142,8 +142,7 @@ def render_content(tab):
         return html.Div([
             html.H3('''This page lets you test if a certain area/neighborhood in Seattle
             have a greater incident rate per month for various types of offenses compared to other 
-            areas/neighborhoods.\n For example, does Pioneer Square have a lower incident rate 
-            for "Simple Assault" than Wallingford?'''),
+            areas/neighborhoods.\n For example, does Pioneer Square have more average incidences per month of "Simple Assault" than Wallingford?'''),
         
             html.H3('Select an offense type:'),
             
@@ -198,7 +197,7 @@ def render_content(tab):
 def testing(offense_type, n1,n2):
     fig = go.Figure()
     if n1 ==n2:
-        return ('Both groups are the same, no hypthesis test can be done',fig, fig)
+        return ('Both groups are the same, no hypthesis test is needed',fig, fig)
     mask = (SPD_data['Offense'] == offense_type) & ((SPD_data['MCPP'].str.contains(n1)) | (SPD_data['MCPP'].str.contains(n2)))
     #print(mask)
     df = SPD_data[mask]
@@ -229,7 +228,7 @@ def testing(offense_type, n1,n2):
     #histogram_plot(dff_n1,dff_n2,n1,n2)
     n1_dist = stats.norm(loc = mean_n1, scale = s_n1)
     n2_dist = stats.norm(loc = mean_n2, scale = s_n2)
-    print(mean_n1,mean_n2)
+    #print(mean_n1,mean_n2)
     
     x_range = np.linspace(0,10,100,endpoint = True)
     x_range_area = np.linspace(n1_dist.ppf(.95),10,100,endpoint = True) 
