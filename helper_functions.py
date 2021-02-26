@@ -51,8 +51,7 @@ def point_in_radius(lat1, lon1, lat2, lon2, radius):
         return False
 
 def address_to_coord(address_string):
-    #print(response.status_code)
-    #print()
+ 
     result = address_string.replace(' ','+')
     query = f'https://nominatim.openstreetmap.org/search?q={result}&format=geojson'
     response = requests.get(f'https://nominatim.openstreetmap.org/search?q={query}&format=geojson')
@@ -81,30 +80,10 @@ def crime_table(data,type, start, end):
     #df['date']=pd.to_datetime(df['Report DateTime']).dt.date
     date_mask = (pd.to_datetime(df['Report DateTime']) >= start) & (pd.to_datetime(df['Report DateTime']) <= end)
     return df[date_mask].groupby('Offense').count()['Report Number'].sort_values(ascending = False).reset_index()
-    
-# def crime_trend_plot(data,type, start):
-
-#     df =data[data['Crime Against Category'] == type].sort_values('Report DateTime', ascending = True)
-#     #df['date']=pd.to_datetime(df['Report DateTime']).dt.date
-#     date_mask = (pd.to_datetime(df['Report DateTime']) >= start) & (pd.to_datetime(df['Report DateTime']) <= pd.to_datetime(start)+timedelta(90))
-#     return df[date_mask].groupby('Offense').count()['Report Number'].reset_index()
-
-# def plot_crime(x,y,label):
-
-#     #x -->list of dates 
-#     #y -->list of the cumsum of crime
-#     #label --> string of type of crime being plotted
-
-#     ax.plot(x,y, label = label)
-#     ax.set_xlabel('Date')
-#     ax.set_ylabel('# of Incidences')
-
-#     ax.legend()
 
 def crime_trend_data(data,type, end_date):
 
     df =data[data['Crime Against Category'] == type].sort_values('Report DateTime', ascending = True)
-    #df['date']=pd.to_datetime(df['Report DateTime']).dt.date
     date_mask = (pd.to_datetime(df['Report DateTime']) <= end_date) & (pd.to_datetime(df['Report DateTime']) >= pd.to_datetime(end_date)-timedelta(days=180)) #selects only rows with certain timeframe
     df = df[date_mask]
     offense_names = df['Offense'].unique()
@@ -115,13 +94,7 @@ def crime_trend_data(data,type, end_date):
         df_off = df[df['Offense'] == o_type]
         df_off['Report DateTime'] = pd.to_datetime(df_off['Report DateTime'])
         df_off = df_off.resample('M', on='Report DateTime').count()['Report Number'].reset_index()
-        #df_off['offense_type'] = o_type
-    
-    #fig_property = px.line(dff, x ='Report DateTime', y = 'Report Number', color = 'offense_type')
-    #fig_property2 = px.scatter(dff, x ='Report DateTime', y = 'Report Number', color= 'offense_type')
-
-        fig.add_trace(go.Scatter(x =df_off['Report DateTime'], y = df_off['Report Number'],
-         mode='lines+markers', name = o_type))
+        fig.add_trace(go.Scatter(x =df_off['Report DateTime'], y = df_off['Report Number'], mode='lines+markers', name = o_type))
 
 
     fig.update_layout(legend = dict(
@@ -134,7 +107,6 @@ def crime_trend_data(data,type, end_date):
 
 def slider_marks(marks,start_date):
     maxmarks=marks
-    #tday=pd.Timestamp.today() #gets timestamp of today
     m1date=start_date
     datelist=pd.date_range(m1date, periods=maxmarks, freq='M') # list of months as dates
     dlist=pd.DatetimeIndex(datelist).normalize()
