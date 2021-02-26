@@ -252,12 +252,12 @@ def testing(offense_type, n1,n2):
                    xaxis_title='Avg Monthly Incident Rate',
                    yaxis_title='Probability Density')
    
-    result = stats.ttest_ind(dff_n1,dff_n2, axis=0,equal_var=False,alternative='greater') 
+    result = stats.ttest_ind(dff_n1,dff_n2, axis=0,equal_var=False) 
     
 
-    if result[1]<.05:
+    if result[1]/2<.05:
         return ((f'{n1} average incidences per month: {mean_n1:.2f} and {n2} average incidences per month: {mean_n2:.2f}.\n\n'
-         f'Under a Two Sample T-Test, the t-statistic was {result[0]} with a p-value of {result[1]}.\n'
+         f'Under a Two Sample T-Test, the t-statistic was {result[0]} with a p-value of {result[1]/2}.\n'
          f'Thus, we can reject our null hypothesis (alpha of .05) that there is NO difference in incidences per month for {offense_type} between {n1} and {n2}.\n'
          f'We also have strong evidence to accept the alternative hypothesis which is that {n1} has more average incidences per month of {offense_type} than {n2}'),
          hf.histogram_plot(dff_n1,dff_n2,n1,n2), fig)
