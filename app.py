@@ -11,7 +11,8 @@ from helper_functions import SPD_data
 import dash_table
 import geopy
 import folium
-import scipy.stats as scipy
+import numpy as np
+import scipy.stats as stats
 
 from datetime import date, timedelta
 
@@ -33,7 +34,6 @@ app.layout = html.Div([
 ],style={
             'backgroundColor': '#ddd',
         })   
-
 
 @app.callback(Output('tab-content', 'children'),
               Input('tabs-example', 'value'))
@@ -103,8 +103,7 @@ def render_content(tab):
             html.H6(children = 'Person Offenses: Past 6 Month Trend'),
             dcc.Graph(id = 'Person_Graph',
             )
-        ],style = {'width':'23%', 'float': 'right', 'display': 'inline-block',
-        'textAlign':'center', 'padding': '10px 5px'}),
+        ],style = {'width':'23%', 'float': 'right', 'display': 'inline-block','textAlign':'center', 'padding': '10px 5px'}),
 
         html.Div([
             html.H6(children = 'Types of Property Offenses'),
@@ -119,8 +118,7 @@ def render_content(tab):
             html.H6(children = 'Property Offenses: Past 6 Month Trend'),
             dcc.Graph(id = 'Property_Graph',
             )        
-        ],style = {'width':'23%','float': 'right',
-        'display': 'inline-block', 'textAlign':'center','padding': '10px 5px'}),
+        ],style = {'width':'23%','float': 'right','display': 'inline-block', 'textAlign':'center','padding': '10px 5px'}),
 
         html.Div([
             html.H6(children = 'Types of Society Offenses'),
@@ -135,8 +133,7 @@ def render_content(tab):
             html.H6(children = 'Society Offenses: Past 6 Month Trend'),
             dcc.Graph(id = 'Society_Graph',
             )     
-        ],style = {'width':'22%', 'float': 'right', 
-        'display': 'inline-block', 'textAlign':'center', 'padding': '10px 5px'}),
+        ],style = {'width':'22%', 'float': 'right','display': 'inline-block', 'textAlign':'center', 'padding': '10px 5px'}),
     ], style={
             'backgroundColor': '#ddd',
             'height':'1200px'
@@ -173,31 +170,41 @@ def render_content(tab):
                 value = 'WALLINGFORD'
             ),
 
-            html.H3('Conclusion:'),
+            html.H3('Conclusion:',style = {'font-size':'40px','textAlign':'center'} ),
             
             dcc.Textarea(
                 id = 'result',
                 placeholder = 'ipsum lorem',
                 value = 'This is where the conclusion goes',
-                style = {'width':'80%'}
+                style = {'width':'100%', 'height':'10%','font-size':'20px','textAlign':'center'}
             ),
-
-
-
-        ])
+            dcc.Graph(
+                id = 'histogram-graph',
+                style = {'width':'48%', 'height':'300px','font-size':'10px','display':'inline-block','textAlign':'center','padding': '10px 5px'}
+            ),
+            dcc.Graph(
+                id = 'pdf-graph',
+                style = {'width':'48%', 'height':'300px','font-size':'10px','display':'inline-block','textAlign':'center','padding': '10px 5px'}
+            )
+        ], style = {'height':'1000px', 'padding': '10px 5px'})
 @app.callback(
     Output(component_id='result',component_property='value'),
+    Output(component_id='histogram-graph',component_property='figure'),
+    Output(component_id='pdf-graph',component_property='figure'),
     Input(component_id='offense-dropdown',component_property = 'value'),
     Input(component_id='first-dropdown',component_property = 'value'),
     Input(component_id='second-dropdown',component_property = 'value'),
 )
 def testing(offense_type, n1,n2):
-    print(offense_type,n1,n2)
-    
-    mask = (hf.SPD_data['Offense'] == offense_type) & ((hf.SPD_data['MCPP'].str.contains(n1)) | (hf.SPD_data['MCPP'].str.contains(n2)))
-    df = hf.SPD_data[mask]
+    fig = go.Figure()
+    if n1 ==n2:
+        return ('Both groups are the same, no hypthesis test can be done',fig, fig)
+    mask = (SPD_data['Offense'] == offense_type) & ((SPD_data['MCPP'].str.contains(n1)) | (SPD_data['MCPP'].str.contains(n2)))
+    #print(mask)
+    df = SPD_data[mask]
+    #print(df)
     if df.empty:
-        return "Unable to compare these areas since one or both of the areas has no offenses of that type"
+        return ("Unable to compare these groups since one of the groups has no offenses of that type",fig,fig)
     
     df['test']=df.apply(lambda x: 1 if n2 in x['MCPP'] else 0,axis=1)
     df['Report DateTime'] = pd.to_datetime(df['Report DateTime'])
@@ -207,19 +214,56 @@ def testing(offense_type, n1,n2):
     #got the count of each group by month and then dropped the date column
     dff_n1 = dff_n1.resample('M', on='Report DateTime').count()['test'].reset_index()
     dff_n1 = dff_n1['test']
-   
     dff_n2 = dff_n2.resample('M', on='Report DateTime').count()['test'].reset_index()
     dff_n2 = dff_n2['test']
+    #mean of each group
+    mean_n1 = np.mean(dff_n1)
+    mean_n2 = np.mean(dff_n2)
+    #variance of each group
+    var_n1 = dff_n1.var(ddof=1)
+    var_n2 = dff_n2.var(ddof=1)
+    #std error of each group
+    s_n1 = np.std(dff_n1)
+    s_n2 = np.std(dff_n2)
     #t-statistic
-    result=scipy.ttest_ind(dff_n1,dff_n2,axis=0,equal_var=False,alternative = 'less')
+    #histogram_plot(dff_n1,dff_n2,n1,n2)
+    n1_dist = stats.norm(loc = mean_n1, scale = s_n1)
+    n2_dist = stats.norm(loc = mean_n2, scale = s_n2)
+    print(mean_n1,mean_n2)
+    
+    x_range = np.linspace(0,10,100,endpoint = True)
+    x_range_area = np.linspace(n1_dist.ppf(.95),10,100,endpoint = True) 
+     
+    fig = go.Figure()
+    # Create and style traces
+    fig.add_trace(go.Scatter(x=x_range, y=n1_dist.pdf(x_range), name=n1,
+                         line=dict(color='firebrick', width=4)))
+    fig.add_trace(go.Scatter(x=x_range, y=n2_dist.pdf(x_range), name=n2,
+                         line=dict(color='royalblue', width=4)))
+
+    fig.add_trace(go.Scatter(x=x_range_area, y=n1_dist.pdf(x_range_area),name=n1, line=dict(color='firebrick'),
+    fill = 'tozeroy'))
+                        
+    
+    fig.update_layout(title=f'Probability Density Graph with 5% Significance Threshold',
+                   xaxis_title='Avg Monthly Incident Rate',
+                   yaxis_title='Probability Density')
+   
+    result = stats.ttest_ind(dff_n1,dff_n2,axis=0,equal_var=False,alternative = 'greater') 
+    
+
     if result[1]<.05:
-        return (f'Under a Two Sample T-Test, the t-statistic was {result[0]} with a p-value of {result[1]}.\n'
-         f'Thus, we can reject our null hypothesis that there is NO difference in incidences per monnth for {offense_type} between {n1} and {n2}.\n'
-         f'We can also accept the alternative hypothesis')
+        return ((f'Under a Two Sample T-Test, the t-statistic was {result[0]} with a p-value of {result[1]}.\n'
+         f'Thus, we can reject our null hypothesis (alpha of .05) that there is NO difference in incidences per month for {offense_type} between {n1} and {n2}.\n'
+         f'We also have strong evidence to accept the alternative hypothesis which is that {n1} has more average incidences per month of {offense_type} than {n2}'),
+         hf.histogram_plot(dff_n1,dff_n2,n1,n2), fig)
 
     else:
-        return (f'Under a Two Sample T-Test, the t-statistic was {result[0]} with a p-value of {result[1]}.\n'
-         f'Thus, we fail to reject our null hypothesis that there is NO difference in incidences per monnth for {offense_type} between {n1} and {n2}.\n')
+        return ((f'Under a Two Sample T-Test, the t-statistic was {result[0]} with a p-value of {result[1]}.\n'
+         f'Thus, we fail to reject our null hypothesis (alpha of .05) that there is NO difference in average incidences per monnth for {offense_type} between {n1} and {n2}.\n'),
+         hf.histogram_plot(dff_n1,dff_n2,n1,n2), fig)
+
+
     
 @app.callback(
     Output(component_id='crime-map',component_property='srcDoc'),

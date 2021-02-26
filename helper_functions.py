@@ -155,4 +155,47 @@ def site_names(col_name):
         result.append({'label': site,'value':site})
     return result
 
+def histogram_plot(dff_n1,dff_n2, n1,n2):
+
+    fig = go.Figure()
+    fig.add_trace(go.Histogram(
+    x=dff_n1,
+    histnorm='percent',
+    name=n1, # name used in legend and hover labels
+    xbins=dict( # bins used for histogram
+        start=0,
+        end=dff_n1.max(),
+        size=1
+    ),
+    marker_color='firebrick',
+    opacity=0.75
+    ))
+    fig.add_trace(go.Histogram(
+        x=dff_n2,
+        histnorm='percent',
+        name=n2,
+        xbins=dict(
+            start=0,
+            end=dff_n2.max(),
+            size=1
+        ),
+        marker_color='royalblue',
+        opacity=0.75
+    ))
+
+    fig.update_layout(
+        title_text='Frequency Histograms', # title of plot
+        xaxis_title_text='# of Incidences per Month', # xaxis label
+        yaxis_title_text='Frequency', # yaxis label
+        bargap=0.2, # gap between bars of adjacent location coordinates
+        bargroupgap=0.05 # gap between bars of the same location coordinates
+    )
+    return fig
+
+
+
+
+
+
+
 
