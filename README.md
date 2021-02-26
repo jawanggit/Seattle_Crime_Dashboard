@@ -19,6 +19,10 @@ The crime data comes from the [Seattle Police Department] (https://data.seattle.
 ### Cleaning the data
 To gain a high-level understanding of the raw data, the pandas-profiling library was used generate an html report of the data. This report provides dataset statistics and variable types along with the distinct and missing counts for each variable. This report was extremely useful in quickly understanding what the different values in data represented and which features in the dataset were incomplete or would need to be excluded. 
 
+* Link to profiling report
+
+
+
 ## Processing the data
 
 ### Helpful functions
