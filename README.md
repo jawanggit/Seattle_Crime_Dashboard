@@ -1,4 +1,4 @@
-# Seattle_Crime_Dashboard
+# Seattle Crime Dashboard with Hypothesis Testing
 EDA project using Seattle Crime Data
 
 ## Project Overview & Background:
