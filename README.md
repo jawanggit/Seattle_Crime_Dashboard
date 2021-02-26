@@ -6,20 +6,20 @@ EDA project using Seattle Crime Data
 Gaining insight into the understanding of the crime in your area can be very difficult. Not only is it important to understand the types and frequency of crimes happening in your area, it is critical to visualize this data across space and time. 
 
 ### Background
-To show how insights can be gained from crime data, I took Seattle crime data from the [Seattle Police Department] (https://data.seattle.gov/Public-Safety/SPD-Crime-Data-2008-Present/tazs-3rd5) and built an interactive dashboard that allows users to create individual views of crime in their area by type, location, and date range. In addition, on the hypothese testing tab, you can hypothesis test if certain areas in Seattle have statistically signficant greater incidences of a certain crime than another.
+To show how insights can be gained from crime data, I took Seattle crime data from the [Seattle Police Department](https://data.seattle.gov/Public-Safety/SPD-Crime-Data-2008-Present/tazs-3rd5) and built an interactive dashboard that allows users to create individual views of crime in their area by type, location, and date range. In addition, on the hypothese testing tab, you can hypothesis test if certain areas in Seattle have statistically signficant greater incidences of a certain crime than another.
 
 
 ## Data Set Assembly:
 
 ### Data Sources
-The crime data comes from the [Seattle Police Department] (https://data.seattle.gov/Public-Safety/SPD-Crime-Data-2008-Present/tazs-3rd5) and ranges from Jan 2017 to Jan 2019. In order to translate inputted addresses, the app calls the MapQuest API which responds back wit a latitude and longitude. 
+The crime data comes from the [Seattle Police Department](https://data.seattle.gov/Public-Safety/SPD-Crime-Data-2008-Present/tazs-3rd5) and ranges from Jan 2017 to Jan 2019. In order to translate inputted addresses, the app calls the MapQuest API which responds back wit a latitude and longitude. 
 
-* Link to [MapQuest API] documenatation (https://developer.mapquest.com/documentation/open/)
+* Link to [MapQuest API](https://developer.mapquest.com/documentation/open/) documenatation 
 
 ### Cleaning the data
 To gain a high-level understanding of the raw data, the pandas-profiling library was used generate an html report of the data. This report provides dataset statistics and variable types along with the distinct and missing counts for each variable. This report was extremely useful in quickly understanding what the different values in data represented and which features in the dataset were incomplete or would need to be excluded. 
 
-* Link to [profiling report] (https://github.com/jawanggit/Seattle_Crime_Dashboard/blob/main/spd_2018-2019.html)
+* Link to [profiling report](https://github.com/jawanggit/Seattle_Crime_Dashboard/blob/main/spd_2018-2019.html)
 
 Since the manipulating the data by a timeframe was a key requirement for the analysis, the "Report DateTime" column was used for reference rather than other datetime fields in the dataset. Filtering by a certain date range required casting the Reprot DateTime field to datetime object using "pd_to_datetime". Once this column was an object datetime object, the range for dataset was set between '2017-01-01' and '2019-01-01'
 
