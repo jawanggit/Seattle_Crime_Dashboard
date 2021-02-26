@@ -12,7 +12,6 @@ import dash_table
 import geopy
 import folium
 import scipy.stats as scipy
-#import dash_bootstrap_components as dbc
 
 from datetime import date, timedelta
 
@@ -30,7 +29,7 @@ app.layout = html.Div([
         dcc.Tab(label='Crime Dashboard', value='tab-crime'),
         dcc.Tab(label='Hypothesis Testing on Crime Data', value='tab-testing'),
     ]),
-    html.Div(id = 'tab-content')
+    html.Div(id = 'tab-crime')
 ])    
 
 
@@ -86,7 +85,7 @@ def render_content(tab):
         html.Div([
             html.H3(children = 'Seattle Crime Map'),
             html.Iframe(id = 'crime-map', srcDoc = open('start_address.html','r').read(), width ='100%', height = '500')
-        ],style = {'width':'30%', 'display': 'inline-block',
+        ],style = {'width':'28%', 'display': 'inline-block',
         'textAlign':'center','padding':'10px 5px'}),
         
         html.Div([
