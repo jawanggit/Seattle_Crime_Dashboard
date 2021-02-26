@@ -20,29 +20,11 @@ SPD_data['coordinates'] = SPD_data[['Latitude', 'Longitude']].values.tolist()
 SPD_data = SPD_data.iloc[:100000,:]
 
 
-# def address_to_coord(address_string):
-#     #print(response.status_code)
-#     #print()
-#     geolocator = geopy.geocoders.MapQuest(api_key =	'E2jkOX2GsyC18ys4zRwZBAzY2nYd2MMR')
-#     location = geolocator.geocode(query = address_string, exactly_one = True)
-#     m = folium.Map(location=location[1], zoom_start = 12)
-#     m.save("start_address.html")
 def crimes_in_radius_dates(coord, radius, start_date, end_date):
-    # month_dict = {}
-    # for k,v in enumerate(slider_marks(25,date(2017, 1, 1))[1]):
-    #     #print(k,v)
-    #     month_dict[k+1]=v
-
-    # start_date = pd.to_datetime(month_dict[range[0]])
-    # end_date = pd.to_datetime(month_dict[range[1]])
     df = SPD_data
     df['Report DateTime']=pd.to_datetime(df['Report DateTime']).dt.date
     date_mask = (pd.to_datetime(df['Report DateTime']) >= start_date) & (pd.to_datetime(df['Report DateTime']) <= end_date)
-    #print(date_mask)
     dff = df[date_mask]
-    #print(f'dff mask: {dff}')
-    #dff['coord'] = dff[['Latitude','Longitude']].values.tolist()
-    #dff['coord'] = list(zip(dff['Latitude'], dff['Longitude']))
 
     result = [point_in_radius(value[0],value[1],coord[0],coord[1],radius)
                 for value in dff['coordinates']]

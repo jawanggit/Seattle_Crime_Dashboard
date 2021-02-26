@@ -22,15 +22,17 @@ external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
-server = app.server
+#server = app.server
 
 app.layout = html.Div([ 
      dcc.Tabs(id='tabs-example', value='tab-crime', children=[
         dcc.Tab(label='Crime Dashboard', value='tab-crime'),
         dcc.Tab(label='Hypothesis Testing on Crime Data', value='tab-testing'),
     ]),
-    html.Div(id = 'tab-crime')
-])    
+    html.Div(id = 'tab-content')
+],style={
+            'backgroundColor': '#ddd',
+        })   
 
 
 @app.callback(Output('tab-content', 'children'),
@@ -137,6 +139,7 @@ def render_content(tab):
         'display': 'inline-block', 'textAlign':'center', 'padding': '10px 5px'}),
     ], style={
             'backgroundColor': '#ddd',
+            'height':'1200px'
         })
     elif tab == 'tab-testing':
         return html.Div([
@@ -218,9 +221,6 @@ def testing(offense_type, n1,n2):
         return (f'Under a Two Sample T-Test, the t-statistic was {result[0]} with a p-value of {result[1]}.\n'
          f'Thus, we fail to reject our null hypothesis that there is NO difference in incidences per monnth for {offense_type} between {n1} and {n2}.\n')
     
-
-
-
 @app.callback(
     Output(component_id='crime-map',component_property='srcDoc'),
     Output(component_id = 'Person_Table',component_property = 'data'),
@@ -231,8 +231,7 @@ def testing(offense_type, n1,n2):
     Output(component_id = 'Society_Graph',component_property = 'figure'),
     Input(component_id='address-input',component_property = 'value'),
     Input(component_id='radius-filter',component_property = 'value'),
-    Input(component_id ='my-datetime-slider', component_property = 'value')
-    #State('address-input', 'value')
+    Input(component_id ='my-datetime-slider', component_property = 'value'),
 )
 def address_to_coord(address_string,radius, range):
     geolocator = geopy.geocoders.MapQuest(api_key =	'E2jkOX2GsyC18ys4zRwZBAzY2nYd2MMR')
@@ -268,3 +267,4 @@ def address_to_coord(address_string,radius, range):
 
 if __name__ == '__main__':
     app.run_server(debug=True)
+    #app.run_server(debug=False,dev_tools_ui=False,dev_tools_props_check=False)
